@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Метро Маршрут</title>
+</head>
+<body>
+<h1>Поиск маршрута</h1>
+<input id="start" placeholder="Станция А">
+<input id="end" placeholder="Станция Б">
+<button onclick="findRoute()">Найти</button>
+<ul id="result"></ul>
+
+<script>
+  function findRoute() {
+    const start = document.getElementById('start').value;
+    const end = document.getElementById('end').value;
+    fetch(`/route?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`)
+            .then(res => res.json())
+            .then(data => {
+              const list = document.getElementById('result');
+              list.innerHTML = '';
+              data.forEach(station => {
+                const li = document.createElement('li');
+                li.textContent = station;
+                list.appendChild(li);
+              });
+            });
+  }
+</script>
+</body>
+</html>
