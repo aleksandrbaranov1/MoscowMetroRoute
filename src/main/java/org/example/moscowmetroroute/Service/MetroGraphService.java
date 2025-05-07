@@ -69,4 +69,18 @@ public class MetroGraphService {
 
         return path.getPath();
     }
+    public int findDistance(int fromId, int toId){
+        Station from = stationRepository.findById(fromId)
+                .orElseThrow(() -> new RuntimeException("Станция не найдена"));
+        Station to = stationRepository.findById(toId)
+                .orElseThrow(() -> new RuntimeException("Станция не найдена: "));
+
+        Graph.Path<Station> path = graph.getShortestPathWidthDistance(from, to);
+
+        return path.getDistance();
+    }
+    public List<Station> getStationByNameContaining(String name){
+        String capName = name.substring(0, 1).toUpperCase() + name.substring(1);
+        return stationRepository.findByNameContainingIgnoreCase(capName);
+    }
 }

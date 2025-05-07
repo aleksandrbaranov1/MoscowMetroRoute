@@ -1,5 +1,6 @@
 package org.example.moscowmetroroute.Controller;
 
+import org.example.moscowmetroroute.DTO.StationDTO;
 import org.example.moscowmetroroute.Graph.MetroMap;
 import org.example.moscowmetroroute.Model.Station;
 import org.example.moscowmetroroute.Repository.StationRepository;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 public class MetroController {
     private final MetroGraphService metroGraphService;
 
-    public MetroController(MetroGraphService metroGraphService) {
+    public MetroController(MetroGraphService metroGraphService, StationRepository stationRepository) {
         this.metroGraphService = metroGraphService;
     }
 
@@ -26,6 +27,26 @@ public class MetroController {
         return metroGraphService.findShortestPath(start, end)
                 .stream()
                 .map(Station::toString)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/getDistance")
+    public int getDistance(@RequestParam int start, @RequestParam int end){
+        return metroGraphService.findDistance(start, end);
+    }
+
+    @GetMapping("/getFromStation")
+    private List<StationDTO> getFromStations(@RequestParam String name){
+        return metroGraphService.getStationByNameContaining(name)
+                .stream()
+                .map(station -> new StationDTO(station.getId(), station.getName(), station.getLine()))
+                .collect(Collectors.toList());
+    }
+    @GetMapping("/getToStation")
+    private List<StationDTO> getToStations(@RequestParam String name){
+        return metroGraphService.getStationByNameContaining(name)
+                .stream()
+                .map(station -> new StationDTO(station.getId(), station.getName(), station.getLine()))
                 .collect(Collectors.toList());
     }
 }
