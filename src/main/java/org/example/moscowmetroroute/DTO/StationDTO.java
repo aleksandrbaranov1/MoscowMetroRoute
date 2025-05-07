@@ -5,13 +5,25 @@ public class StationDTO {
     private String name;
     private String line;
 
+    public int[] getRgbColor() {
+        return rgbColor;
+    }
+
+    public void setRgbColor(int[] rgbColor) {
+        this.rgbColor = rgbColor;
+    }
+
+    private int[] rgbColor;
+
+
     public StationDTO() {
     }
 
-    public StationDTO(Long id, String name, String line) {
+    public StationDTO(Long id, String name, String line, int[] rgbColor) {
         this.id = id;
         this.name = name;
         this.line = line;
+        this.rgbColor = rgbColor;
     }
 
     public Long getId() {

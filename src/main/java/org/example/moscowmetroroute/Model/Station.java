@@ -18,14 +18,31 @@ public class Station {
     @Column(name = "line", nullable = false)
     private String line;
 
-    // Конструктор без параметров обязателен для JPA
+    @Transient
+    private int[] rgbColor;
     public Station() {}
 
     public Station(String name, String line) {
         this.name = name;
         this.line = line;
+        this.rgbColor = getColorByLine(line);
     }
-
+    private int[] getColorByLine(String line) {
+        switch (line) {
+            case "Сокольническая":
+                return new int[]{255, 0, 0};
+            case "Замоскворецкая":
+                return new int[]{0, 255, 0};
+            case "Арбатско-Покровская":
+                return new int[]{0, 0, 255};
+            case "Филёвская":
+                return new int[]{0, 255, 255};
+            case "Кольцевая":
+                return new int[]{128, 0, 0};
+            default:
+                return new int[]{128, 128, 128}; // серый по умолчанию
+        }
+    }
     public Long getId() {
         return id;
     }
@@ -50,6 +67,17 @@ public class Station {
         this.line = line;
     }
 
+    public int[] getRgbColor() {
+        return rgbColor;
+    }
+
+    public void setRgbColor(int[] rgbColor) {
+        this.rgbColor = rgbColor;
+    }
+    @PostLoad
+    public void initColor() {
+        this.rgbColor = getColorByLine(this.line);
+    }
     @Override
     public String toString() {
         return name + " (" + line + ")";
@@ -67,4 +95,5 @@ public class Station {
     public int hashCode() {
         return Objects.hash(name, line);
     }
+
 }

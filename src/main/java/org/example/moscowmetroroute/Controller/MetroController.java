@@ -39,14 +39,14 @@ public class MetroController {
     private List<StationDTO> getFromStations(@RequestParam String name){
         return metroGraphService.getStationByNameContaining(name)
                 .stream()
-                .map(station -> new StationDTO(station.getId(), station.getName(), station.getLine()))
+                .map(station -> new StationDTO(station.getId(), station.getName(), station.getLine(), station.getRgbColor()))
                 .collect(Collectors.toList());
     }
     @GetMapping("/getToStation")
     private List<StationDTO> getToStations(@RequestParam String name){
         return metroGraphService.getStationByNameContaining(name)
                 .stream()
-                .map(station -> new StationDTO(station.getId(), station.getName(), station.getLine()))
+                .map(station -> new StationDTO(station.getId(), station.getName(), station.getLine(), station.getRgbColor()))
                 .collect(Collectors.toList());
     }
 }
