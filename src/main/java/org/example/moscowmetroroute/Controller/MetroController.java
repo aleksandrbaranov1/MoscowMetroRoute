@@ -21,12 +21,17 @@ public class MetroController {
         this.metroGraphService = metroGraphService;
     }
 
-    @GetMapping
-    public List<String> getRoute(@RequestParam int start, @RequestParam int end) {
+    @GetMapping("/getRoute")
+    public List<StationDTO> getRoute(@RequestParam int start, @RequestParam int end) {
 
         return metroGraphService.findShortestPath(start, end)
                 .stream()
-                .map(Station::toString)
+                .map(station -> new StationDTO(
+                        station.getId(),
+                        station.getName(),
+                        station.getLine(),
+                        station.getRgbColor()
+                ))
                 .collect(Collectors.toList());
     }
 
