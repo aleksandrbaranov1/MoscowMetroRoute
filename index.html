@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Построение маршрута в московском метро</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .header img {
+      height: 40px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin: 0;
+    }
+
+    /* Остальные стили не изменяются */
+    .container {
+      display: flex;
+      gap: 20px;
+    }
+
+    .dropdown {
+      position: relative;
+      width: 300px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+
+    .suggestions {
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
+    .suggestion-item {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .suggestion-item:hover {
+      background: #f0f0f0;
+    }
+
+    .line-label {
+      font-size: 12px;
+      color: gray;
+      margin-left: 5px;
+    }
+
+    #routeDisplay {
+      margin-top: 20px;
+    }
+
+    .station-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .color-circle {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+
+    .suggestion-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+<!-- Добавленный блок заголовка -->
+<div class="header">
+  <img src="new-teaser-1200x900-2.png" alt="Логотип метро" />
+  <h1>Построение маршрута в московском метро</h1>
+</div>
+
+<div class="container">
+  <div class="dropdown">
+    <input
+            type="text"
+            id="stationInputFrom"
+            placeholder="Станция отправления"
+    />
+    <div id="suggestionsFrom" class="suggestions"></div>
+  </div>
+
+  <div class="dropdown">
+    <input
+            type="text"
+            id="stationInputTo"
+            placeholder="Станция назначения"
+    />
+    <div id="suggestionsTo" class="suggestions"></div>
+  </div>
+
+  <button id="findRouteBtn">Построить аршрут</button>
+</div>
+
+<div id="routeDisplay"></div>
+
+<script>
+  const inputFrom = document.getElementById("stationInputFrom");
+  const inputTo = document.getElementById("stationInputTo");
+  const suggestionsFrom = document.getElementById("suggestionsFrom");
+  const suggestionsTo = document.getElementById("suggestionsTo");
+  const routeDisplay = document.getElementById("routeDisplay");
+
+  function setupAutoSuggest(input, suggestionsDiv, url) {
+    input.addEventListener("input", () => {
+      const query = input.value.trim();
+      suggestionsDiv.innerHTML = "";
+
+      if (query.length === 0) return;
+
+      fetch(`${url}?name=${encodeURIComponent(query)}`)
+              .then((res) => res.json())
+              .then((stations) => {
+                suggestionsDiv.innerHTML = "";
+                stations.forEach((station) => {
+                  const item = document.createElement("div");
+                  item.className = "suggestion-item";
+
+                  const color = station.rgbColor
+                          ? `rgb(${station.rgbColor[0]}, ${station.rgbColor[1]}, ${station.rgbColor[2]})`
+                          : "#000";
+
+                  item.innerHTML = `
+                  <div class="suggestion-color" style="background-color: ${color}"></div>
+                  ${station.name} <span class="line-label">(${station.line})</span>
+                `;
+
+                  item.onclick = () => {
+                    input.value = `${station.name} (${station.line})`;
+                    input.dataset.stationId = station.id;
+                    suggestionsDiv.innerHTML = "";
+                  };
+                  suggestionsDiv.appendChild(item);
+                });
+              })
+              .catch((err) => console.error(err));
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".dropdown")) {
+        suggestionsDiv.innerHTML = "";
+      }
+    });
+  }
+
+  setupAutoSuggest(
+          inputFrom,
+          suggestionsFrom,
+          "http://localhost:8080/getFromStation"
+  );
+  setupAutoSuggest(
+          inputTo,
+          suggestionsTo,
+          "http://localhost:8080/getToStation"
+  );
+
+  document.getElementById("findRouteBtn").addEventListener("click", () => {
+    const startId = inputFrom.dataset.stationId;
+    const endId = inputTo.dataset.stationId;
+
+    if (!startId || !endId) {
+      alert("Пожалуйста, выберите обе станции.");
+      return;
+    }
+
+    Promise.all([
+      fetch(
+              `http://localhost:8080/getRoute?start=${startId}&end=${endId}`
+      ).then((res) => res.json()),
+      fetch(
+              `http://localhost:8080/getDistance?start=${startId}&end=${endId}`
+      ).then((res) => res.json()),
+    ])
+            .then(([route, duration]) => {
+              routeDisplay.innerHTML = `<h3>Маршрут:</h3>`;
+
+              route.forEach((station) => {
+                const div = document.createElement("div");
+                div.className = "station-item";
+
+                const color = station.rgbColor
+                        ? `rgb(${station.rgbColor[0]}, ${station.rgbColor[1]}, ${station.rgbColor[2]})`
+                        : "#000";
+
+                div.innerHTML = `
+              <div class="color-circle" style="background-color: ${color}"></div>
+              ${station.name} (${station.line})
+            `;
+                routeDisplay.appendChild(div);
+              });
+
+              const timeBlock = document.createElement("div");
+              timeBlock.innerHTML = `<strong>Время в пути:</strong> ${duration} мин.`;
+              timeBlock.style.marginTop = "10px";
+              routeDisplay.appendChild(timeBlock);
+            })
+            .catch((err) => {
+              console.error(err);
+              alert("Ошибка при получении маршрута или времени");
+            });
+  });
+</script>
+</body>
+</html>
